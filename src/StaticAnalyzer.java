@@ -22,9 +22,11 @@ public class StaticAnalyzer {
         //Choose the file to analyze
         staticAnalyzer.chooseApk();
 
-        //Test calling out the tools
+        //Decompile the apk
         staticAnalyzer.doApkTool();
         staticAnalyzer.doDex2Jar();
+
+        //Analyze
     }
 
     private synchronized void determineOS() {
@@ -156,18 +158,27 @@ public class StaticAnalyzer {
      * Helper method for doDex2Jar
      */
     private synchronized void createFolderForDex2Jar() {
-        dexDirectory = "./output/" + apkName + "Classes";
-        List<String> arguments = new ArrayList<>();
-        arguments.add("mkdir");
-        arguments.add(dexDirectory);
-
-        ProcessBuilder pb = new ProcessBuilder(arguments);
-        try {
-            Process p = pb.start();
-            p.waitFor();
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+        switch (currentOs) {
+            case Windows:
+                dexDirectory = ".\\output\\" + apkName + "Classes";
+                new File(dexDirectory).mkdir();
+                break;
+            case OSX:
+                dexDirectory = "./output/" + apkName + "Classes";
+                break;
         }
+//        List<String> arguments = new ArrayList<>();
+//        arguments.add("mkdir");
+//        arguments.add(dexDirectory);
+//
+//
+//        ProcessBuilder pb = new ProcessBuilder(arguments);
+//        try {
+//            Process p = pb.start();
+//            p.waitFor();
+//        } catch (IOException | InterruptedException e) {
+//            e.printStackTrace();
+//        }
     }
 
 }
