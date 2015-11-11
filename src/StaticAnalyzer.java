@@ -165,20 +165,9 @@ public class StaticAnalyzer {
                 break;
             case OSX:
                 dexDirectory = "./output/" + apkName + "Classes";
+                new File(dexDirectory).mkdir();
                 break;
         }
-//        List<String> arguments = new ArrayList<>();
-//        arguments.add("mkdir");
-//        arguments.add(dexDirectory);
-//
-//
-//        ProcessBuilder pb = new ProcessBuilder(arguments);
-//        try {
-//            Process p = pb.start();
-//            p.waitFor();
-//        } catch (IOException | InterruptedException e) {
-//            e.printStackTrace();
-//        }
     }
 
 }
