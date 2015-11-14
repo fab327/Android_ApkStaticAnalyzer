@@ -160,11 +160,11 @@ public class StaticAnalyzer {
     private synchronized void createFolderForDex2Jar() {
         switch (currentOs) {
             case Windows:
-                dexDirectory = ".\\output\\" + apkName + "Classes";
+                dexDirectory = ".\\output\\" + apkName + "\\" + "sources";
                 new File(dexDirectory).mkdir();
                 break;
             case OSX:
-                dexDirectory = "./output/" + apkName + "Classes";
+                dexDirectory = "./output/" + apkName + "/" + "sources";
                 new File(dexDirectory).mkdir();
                 break;
         }
