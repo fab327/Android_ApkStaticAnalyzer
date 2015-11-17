@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>CS7990</groupId>
+    <artifactId>StaticAnalyzer</artifactId>
+    <version>1.0</version>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.alexkasko.krakatau</groupId>
+            <artifactId>krakatau-lib</artifactId>
+            <version>1.1</version>
+            <classifier>standalone</classifier>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.python</groupId>
+                    <artifactId>jython-standalone</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.eclipse.jdt.core.compiler</groupId>
+                    <artifactId>ecj</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-io</groupId>
+                    <artifactId>commons-io</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bitbucket.mstrobel</groupId>
+            <artifactId>procyon-compilertools</artifactId>
+            <version>0.5.32</version>
+        </dependency>
+    </dependencies>
+
+</project>
