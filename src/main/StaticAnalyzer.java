@@ -17,10 +17,10 @@ import java.util.List;
  */
 public class StaticAnalyzer {
 
-    private enum OS {Windows, OSX}
+    public enum OS {Windows, OSX}
 
-    private OS currentOs;
-    private String javaHome, javaHome2, apkName, apkLocation, dexDirectory, decompiledDirectory, pathManifest;
+    private static OS currentOs;
+    private static String javaHome, javaHomeAlternative, apkName, apkLocation, dexDirectory, decompiledDirectory, manifestPath;
 
     public static void main(String[] args) {
         StaticAnalyzer staticAnalyzer = new StaticAnalyzer();
@@ -31,11 +31,14 @@ public class StaticAnalyzer {
         staticAnalyzer.chooseApk();
 
         //Decompile the apk
-        staticAnalyzer.doApkTool();
-        staticAnalyzer.doDex2Jar();
-        staticAnalyzer.toJavaSourceCode();
+        ApkToolHelper.doApkTool(javaHome, javaHomeAlternative, apkLocation, apkName, currentOs);
+        Dex2JarHelper dex2JarHelper = Dex2JarHelper.getInstance(currentOs, apkLocation, apkName);
+        dex2JarHelper.doDex2Jar();
+        dexDirectory = dex2JarHelper.getDexDirectory();
+
+        staticAnalyzer.dexToJava();
         //Analyze
-        staticAnalyzer.analyze();
+//        staticAnalyzer.analyze();
 
     }
 
@@ -62,7 +65,7 @@ public class StaticAnalyzer {
         }
         switch (currentOs) {
             case Windows:
-                javaHome2 = javaHome + "\\bin\\java";
+                javaHomeAlternative = javaHome + "\\bin\\java";
                 javaHome = javaHome + "\\java";
                 break;
             case OSX:
@@ -90,102 +93,36 @@ public class StaticAnalyzer {
         }
     }
 
-    private synchronized void doApkTool() {
-        List<String> arguments = new ArrayList<>();
-        arguments.add(javaHome);
-        arguments.add("-jar");
-        arguments.add("./tools/apktool.jar");
-        arguments.add("d");
-        arguments.add(apkLocation);
-        arguments.add("-f");
-        arguments.add("-o");
-        arguments.add("output/" + apkName);
-
-        switch (currentOs) {
-            case Windows:
-                ProcessBuilder pb = new ProcessBuilder(arguments);
-                try {
-                    Process p = pb.start();
-                    p.waitFor();
-                } catch (IOException | InterruptedException e) {
-                    try {
-                        arguments.set(0, javaHome2);
-                        pb = new ProcessBuilder(arguments);
-                        Process p = pb.start();
-                        p.waitFor();
-                    } catch (IOException | InterruptedException e2){
-                        e2.printStackTrace();
-                    }
-                }
-                break;
-            case OSX:
-                pb = new ProcessBuilder(arguments);
-                try {
-                    Process p = pb.start();
-                    p.waitFor();
-                } catch (IOException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-                break;
-        }
-    }
-
-    private synchronized void doDex2Jar() {
-        createFolderForDex2Jar();
-
-        List<String> arguments = new ArrayList<>();
-        switch (currentOs) {
-            case Windows:
-                arguments.add("./tools/dex2jar/d2j-dex2jar.bat");
-                arguments.add(apkLocation);
-                arguments.add("-f");
-                arguments.add("-o");
-                arguments.add(dexDirectory);
-
-                ProcessBuilder pb = new ProcessBuilder(arguments);
-                try {
-                    Process p = pb.start();
-                    p.waitFor();
-                } catch (IOException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-                break;
-            case OSX:
-                arguments.add("sh");
-                arguments.add("./tools/dex2jar/d2j-dex2jar.sh");
-                arguments.add(apkLocation);
-                arguments.add("-f");
-                arguments.add("-o");
-                arguments.add(dexDirectory);
-
-                ProcessBuilder permissionProcess = new ProcessBuilder("chmod", "+x", "./tools/dex2jar/d2j_invoke.sh");
-                pb = new ProcessBuilder(arguments);
-                try {
-                    Process permP = permissionProcess.start();
-                    permP.waitFor();
-                    Process p = pb.start();
-                    p.waitFor();
-                } catch (IOException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-                break;
-        }
-    }
-
     /**
-     * Helper method for doDex2Jar
+     * Decompile classes to Java source code
      */
-    private synchronized void createFolderForDex2Jar() {
+    private synchronized void dexToJava() {
+        File classPath = new File (getClassPath());
+        createFolderForDecompiled();
+        List<String> classes = getClassNames(classPath);
+
+        //output directory
+        File outputDir = new File(decompiledDirectory);
+
+        for (String className : classes) {
+            decompileClass(outputDir, classPath, className);
+        }
+    }
+
+    private synchronized String getClassPath() {
+        String packageName = getPackageName();
+        String classpath = null;
         switch (currentOs) {
             case Windows:
-                dexDirectory = ".\\output\\" + apkName + "\\" + "sources";
-                new File(dexDirectory).mkdir();
+                classpath = dexDirectory + "\\" + packageName.replace(".","\\");
                 break;
             case OSX:
-                dexDirectory = "./output/" + apkName + "/" + "sources";
-                new File(dexDirectory).mkdir();
+                classpath = dexDirectory + "/" + packageName.replace(".","/");
                 break;
         }
+        System.out.println("classpath: " + classpath);
+
+        return classpath;
     }
 
     /**
@@ -193,14 +130,14 @@ public class StaticAnalyzer {
      */
     private synchronized String getPackageName() {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = null;
+        DocumentBuilder builder;
         Document document;
         String packageName = null;
-        pathManifest = getPathManifest();
+        manifestPath = getManifestPath();
 
         try {
             builder = factory.newDocumentBuilder();
-            document = builder.parse(new File(pathManifest));
+            document = builder.parse(new File(manifestPath));
             Element root  = document.getDocumentElement();
 
             packageName = root.getAttributes().getNamedItem("package").getNodeValue();
@@ -214,35 +151,64 @@ public class StaticAnalyzer {
     /**
      * Helper method for getPackageName
      */
-    private String getPathManifest() {
+    private String getManifestPath() {
         switch (currentOs) {
             case Windows:
-                pathManifest = ".\\output\\" + apkName + "\\AndroidManifest.xml";
+                manifestPath = ".\\output\\" + apkName + "\\AndroidManifest.xml";
                 break;
             case OSX:
-                pathManifest = "./output/" + apkName + "/AndroidManifest.xml";
+                manifestPath = "./output/" + apkName + "/AndroidManifest.xml";
                 break;
         }
 
-        return pathManifest;
+        return manifestPath;
     }
 
     /**
-     * Decompile classes to Java source code
+     * Helper method for classToJava
      */
-    private synchronized void toJavaSourceCode() {
-        File classPath = new File (getClassPath());
-        createFolderForDecompiled();
-        List<String> classes = getClassNames(classPath);
-
-        //output directory
-        File outputDir = new File(decompiledDirectory);
-
-        for (String className : classes) {
-            decompileClass(outputDir, classPath, className);
+    private synchronized void createFolderForDecompiled() {
+        switch (currentOs) {
+            case Windows:
+                decompiledDirectory = ".\\output\\" + apkName + "\\" + "javaSource";
+                new File(decompiledDirectory).mkdir();
+                break;
+            case OSX:
+                decompiledDirectory = "./output/" + apkName + "/" + "javaSource";
+                new File(decompiledDirectory).mkdir();
+                break;
         }
     }
 
+    private List<String> getClassNames(final File folder) {
+        //TODO: Need to also recursively analyze folders
+        List<String> classNames = new ArrayList<>();
+
+        for (final File fileEntry : folder.listFiles()) {
+            if (fileEntry.isDirectory()) {
+                for (File subFolderFile: fileEntry.listFiles()) {
+                    String className = subFolderFile.getName();
+                    //ignores classes with $ notation
+                    if (!className.contains("$")) {
+                        classNames.add(className);
+                    }
+                }
+            }
+            if (fileEntry.isFile()) {
+                String className = fileEntry.getName();
+                //ignores classes with $ notation
+                if (!className.contains("$")) {
+                    classNames.add(className);
+                }
+            }
+        }
+
+        return classNames;
+    }
+
+    /**
+     * Helper method
+     */
     private synchronized void decompileClass(File outputDir, File classPath, String className) {
         PrintWriter writer = null;
         String fileOut = null;
@@ -274,54 +240,6 @@ public class StaticAnalyzer {
         }
     }
 
-    public List<String> getClassNames(final File folder) {
-        List<String> classNames = new ArrayList<>();
-
-        for (final File fileEntry : folder.listFiles()) {
-            if (fileEntry.isFile()) {
-                String className = fileEntry.getName();
-                //ignores classes with $ notation
-                if (!className.contains("$")) {
-                    classNames.add(className);
-                }
-            }
-        }
-
-        return classNames;
-    }
-
-    private synchronized String getClassPath() {
-        String packageName = getPackageName();
-        String classpath = null;
-        switch (currentOs) {
-            case Windows:
-                classpath = dexDirectory + "\\" + packageName.replace(".","\\");
-                break;
-            case OSX:
-                classpath = dexDirectory + "/" + packageName.replace(".","/");
-                break;
-        }
-        System.out.println("classpath: " + classpath);
-
-        return classpath;
-    }
-
-    /**
-     * Helper method for classToJava
-     */
-    private synchronized void createFolderForDecompiled() {
-        switch (currentOs) {
-            case Windows:
-                decompiledDirectory = ".\\output\\" + apkName + "JavaSourceCode";
-                new File(decompiledDirectory).mkdir();
-                break;
-            case OSX:
-                decompiledDirectory = "./output/" + apkName + "JavaSourceCode";
-                new File(decompiledDirectory).mkdir();
-                break;
-        }
-    }
-
     /**
      * Reads the java files, line by line
      */
@@ -346,12 +264,11 @@ public class StaticAnalyzer {
                          *
                          */
                     }
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }
     }
+
 }
