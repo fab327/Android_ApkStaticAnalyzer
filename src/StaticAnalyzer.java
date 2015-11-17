@@ -1,6 +1,12 @@
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
+
 import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +18,7 @@ public class StaticAnalyzer {
     private enum OS {Windows, OSX}
 
     private OS currentOs;
-    private String javaHome, apkName, apkLocation, dexDirectory;
+    private String javaHome, javaHome2, apkName, apkLocation, dexDirectory, decompiledDirectory, pathManifest;
 
     public static void main(String[] args) {
         StaticAnalyzer staticAnalyzer = new StaticAnalyzer();
@@ -25,8 +31,10 @@ public class StaticAnalyzer {
         //Decompile the apk
         staticAnalyzer.doApkTool();
         staticAnalyzer.doDex2Jar();
-
+        staticAnalyzer.toJavaSourceCode();
         //Analyze
+        staticAnalyzer.analyze();
+
     }
 
     private synchronized void determineOS() {
@@ -52,6 +60,7 @@ public class StaticAnalyzer {
         }
         switch (currentOs) {
             case Windows:
+                javaHome2 = javaHome + "\\bin\\java";
                 javaHome = javaHome + "\\java";
                 break;
             case OSX:
@@ -97,7 +106,14 @@ public class StaticAnalyzer {
                     Process p = pb.start();
                     p.waitFor();
                 } catch (IOException | InterruptedException e) {
-                    e.printStackTrace();
+                    try {
+                        arguments.set(0, javaHome2);
+                        pb = new ProcessBuilder(arguments);
+                        Process p = pb.start();
+                        p.waitFor();
+                    } catch (IOException | InterruptedException e2){
+                        e2.printStackTrace();
+                    }
                 }
                 break;
             case OSX:
@@ -170,4 +186,169 @@ public class StaticAnalyzer {
         }
     }
 
+    /**
+     * Returns the package name contained in the manifest file
+     */
+    private synchronized String getPackageName() {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = null;
+        Document document;
+        String packageName = null;
+        pathManifest = getPathManifest();
+
+        try {
+            builder = factory.newDocumentBuilder();
+            document = builder.parse(new File(pathManifest));
+            Element root  = document.getDocumentElement();
+
+            packageName = root.getAttributes().getNamedItem("package").getNodeValue();
+        }
+        catch (ParserConfigurationException | SAXException | IOException e) {
+            e.printStackTrace();
+        }
+        return packageName;
+    }
+
+    /**
+     * Helper method for getPackageName
+     */
+    private String getPathManifest() {
+        switch (currentOs) {
+            case Windows:
+                pathManifest = ".\\output\\" + apkName + "\\AndroidManifest.xml";
+                break;
+            case OSX:
+                pathManifest = "./output/" + apkName + "/AndroidManifest.xml";
+                break;
+        }
+
+        return pathManifest;
+    }
+
+    /**
+     * Decompile classes to Java source code
+     */
+    private synchronized void toJavaSourceCode() {
+        File classPath = new File (getClassPath());
+        createFolderForDecompiled();
+        List<String> classes = getClassNames(classPath);
+
+        //output directory
+        File outputDir = new File(decompiledDirectory);
+
+        for (String className : classes) {
+            decompileClass(outputDir, classPath, className);
+        }
+    }
+
+    private synchronized void decompileClass(File outputDir, File classPath, String className) {
+        PrintWriter writer = null;
+        String fileOut = null;
+        String classPathAndName = null;
+
+        switch (currentOs) {
+            case Windows:
+                fileOut = outputDir + "\\" + className.replace(".class", ".java");
+                classPathAndName = classPath + "\\" + className;
+                break;
+            case OSX:
+                fileOut = outputDir + "/" + className.replace(".class", ".java");
+                classPathAndName = classPath + "/" + className;
+                break;
+            }
+
+        try {
+            writer = new PrintWriter(fileOut);
+
+            com.strobel.decompiler.Decompiler.decompile(
+                    classPathAndName,
+                    new com.strobel.decompiler.PlainTextOutput(writer)
+            );
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            writer.flush();
+        }
+    }
+
+    public List<String> getClassNames(final File folder) {
+        List<String> classNames = new ArrayList<>();
+
+        for (final File fileEntry : folder.listFiles()) {
+            if (fileEntry.isFile()) {
+                String className = fileEntry.getName();
+                //ignores classes with $ notation
+                if (!className.contains("$")) {
+                    classNames.add(className);
+                }
+            }
+        }
+
+        return classNames;
+    }
+
+    private synchronized String getClassPath() {
+        String packageName = getPackageName();
+        String classpath = null;
+        switch (currentOs) {
+            case Windows:
+                classpath = dexDirectory + "\\" + packageName.replace(".","\\");
+                break;
+            case OSX:
+                classpath = dexDirectory + "/" + packageName.replace(".","/");
+                break;
+        }
+        System.out.println("classpath: " + classpath);
+
+        return classpath;
+    }
+
+    /**
+     * Helper method for classToJava
+     */
+    private synchronized void createFolderForDecompiled() {
+        switch (currentOs) {
+            case Windows:
+                decompiledDirectory = ".\\output\\" + apkName + "JavaSourceCode";
+                new File(decompiledDirectory).mkdir();
+                break;
+            case OSX:
+                decompiledDirectory = "./output/" + apkName + "JavaSourceCode";
+                new File(decompiledDirectory).mkdir();
+                break;
+        }
+    }
+
+    /**
+     * Reads the java files, line by line
+     */
+    private synchronized void analyze() {
+        File folder = new File(decompiledDirectory);
+        for (final File fileEntry : folder.listFiles()) {
+            if (fileEntry.isFile()) {
+                try {
+                    BufferedReader br = new BufferedReader(new FileReader(fileEntry.getAbsolutePath()));
+                    String line;
+
+                    System.out.println("Analysing Java File: " + fileEntry.getName());
+                    while ((line = br.readLine()) != null) {
+                        System.out.println(line);
+                        /**
+                         * Code analysis
+                         *
+                         *
+                         *
+                         *
+                         *
+                         *
+                         */
+                    }
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 }
