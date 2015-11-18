@@ -12,6 +12,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by fab on 11/10/2015
@@ -116,7 +118,7 @@ public class StaticAnalyzer {
         File classPath = new File(getClassPath());
         createFolderForDecompiled();
         File outputDir = new File(decompiledDirectory);
-        getAndDecompileClasses(outputDir, classPath.listFiles());
+        getAndDecompileClasses(outputDir, classPath);
     }
 
     private synchronized String getClassPath() {
@@ -188,16 +190,41 @@ public class StaticAnalyzer {
         }
     }
 
-    private void getAndDecompileClasses(File outputDir, File[] files) {
-        for (File file : files) {
-            if (file.isDirectory()) {
-                getAndDecompileClasses(outputDir, file.listFiles());
-            } else if (file.isFile()) {
-                if (!file.getName().contains("$")) {
-                    decompileClass(outputDir, file.getAbsolutePath(), file.getName());
+    private void getAndDecompileClasses(File outputDir, File folder) {
+        File [] files = folder.listFiles();
+        if (files == null) {
+            System.out.println("Error: There are no .class files to decompile");
+        } else {
+            int classCount = 1;
+            int totalClasses = countRelevantClasses(files);
+
+            System.out.println("Decompiling " + totalClasses + " classes at folder: " + folder.getName());
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    getAndDecompileClasses(outputDir, file);
+                } else if (file.isFile()) {
+                    String className = file.getName();
+                    if (!className.contains("$")) {
+                        System.out.println("Decompiling " + className + " (" + classCount + " out of " + totalClasses + ")");
+                        decompileClass(outputDir, file.getAbsolutePath(), file.getName());
+                        classCount++;
+                    }
                 }
             }
         }
+    }
+
+    /**
+     * Counts relevant classes
+     */
+    private synchronized int countRelevantClasses(File[] files) {
+        int count = 0;
+        for (File file : files) {
+            if (file.isFile() && !file.getName().contains("$")) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /**
@@ -235,33 +262,36 @@ public class StaticAnalyzer {
     private void giveDiagnosis(int analyzisScore) {
         switch (analyzisScore/10){
             case 0:
-                System.out.println("This app seems beningn, nothing to worry about");
+                System.out.println("This app seems benign, nothing to worry about.");
                 break;
             case 1:
+                System.out.println("This app requires a few benign permissions.");
                 break;
             case 2:
-                break;
             case 3:
+                System.out.println("This app requires a few invasive permissions, it is recommended not to install it.");
                 break;
             case 4:
-                break;
             case 5:
-                break;
             case 6:
-                break;
             case 7:
-                break;
             case 8:
-                break;
             case 9:
-                System.out.println("This app requires a lot of invasive permissions, it is recommended not to install it");
-                break;
             case 10:
             case 11:
+                System.out.println("This app requires invasive permissions, it is recommended not to install it.");
+                break;
             case 12:
             case 13:
             case 14:
             case 15:
+            case 16:
+            case 17:
+            case 18:
+            case 19:
+            case 20:
+            case 21:
+            case 22:
                 System.out.println("This app is extremely dangerous!");
                 break;
         }
