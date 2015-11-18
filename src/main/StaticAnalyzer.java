@@ -9,8 +9,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by fab on 11/10/2015
@@ -36,10 +34,11 @@ public class StaticAnalyzer {
         dex2JarHelper.doDex2Jar();
         dexDirectory = dex2JarHelper.getDexDirectory();
 
+        //Decompile the classes so they can be analyzed
         staticAnalyzer.dexToJava();
-        //Analyze
-//        staticAnalyzer.analyze();
 
+        //Analyze the data
+        staticAnalyzer.analyze();
     }
 
     private synchronized void determineOS() {
@@ -99,14 +98,8 @@ public class StaticAnalyzer {
     private synchronized void dexToJava() {
         File classPath = new File (getClassPath());
         createFolderForDecompiled();
-        List<String> classes = getClassNames(classPath);
-
-        //output directory
         File outputDir = new File(decompiledDirectory);
-
-        for (String className : classes) {
-            decompileClass(outputDir, classPath, className);
-        }
+        getAndDecompileClasses(outputDir, classPath.listFiles());
     }
 
     private synchronized String getClassPath() {
@@ -120,7 +113,6 @@ public class StaticAnalyzer {
                 classpath = dexDirectory + "/" + packageName.replace(".","/");
                 break;
         }
-        System.out.println("classpath: " + classpath);
 
         return classpath;
     }
@@ -180,48 +172,31 @@ public class StaticAnalyzer {
         }
     }
 
-    private List<String> getClassNames(final File folder) {
-        //TODO: Need to also recursively analyze folders
-        List<String> classNames = new ArrayList<>();
-
-        for (final File fileEntry : folder.listFiles()) {
-            if (fileEntry.isDirectory()) {
-                for (File subFolderFile: fileEntry.listFiles()) {
-                    String className = subFolderFile.getName();
-                    //ignores classes with $ notation
-                    if (!className.contains("$")) {
-                        classNames.add(className);
-                    }
-                }
-            }
-            if (fileEntry.isFile()) {
-                String className = fileEntry.getName();
-                //ignores classes with $ notation
-                if (!className.contains("$")) {
-                    classNames.add(className);
+    private void getAndDecompileClasses(File outputDir, File[] files) {
+        for (File file: files) {
+            if (file.isDirectory()) {
+                getAndDecompileClasses(outputDir, file.listFiles());
+            } else if (file.isFile()) {
+                if (!file.getName().contains("$")) {
+                    decompileClass(outputDir, file.getAbsolutePath(), file.getName());
                 }
             }
         }
-
-        return classNames;
     }
 
     /**
      * Helper method
      */
-    private synchronized void decompileClass(File outputDir, File classPath, String className) {
+    private synchronized void decompileClass(File outputDir, String classPath, String className) {
         PrintWriter writer = null;
         String fileOut = null;
-        String classPathAndName = null;
 
         switch (currentOs) {
             case Windows:
                 fileOut = outputDir + "\\" + className.replace(".class", ".java");
-                classPathAndName = classPath + "\\" + className;
                 break;
             case OSX:
                 fileOut = outputDir + "/" + className.replace(".class", ".java");
-                classPathAndName = classPath + "/" + className;
                 break;
             }
 
@@ -230,12 +205,13 @@ public class StaticAnalyzer {
 
 
             com.strobel.decompiler.Decompiler.decompile(
-                    classPathAndName,
+                    classPath,
                     new com.strobel.decompiler.PlainTextOutput(writer)
             );
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } finally {
+            System.out.println("Decompiled: " + className + " to .java");
             writer.flush();
         }
     }
