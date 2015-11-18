@@ -7,6 +7,7 @@ import java.util.List;
 
 /**
  * Created by fab on 11/17/15
+ * Singleton class
  */
 public class Dex2JarHelper {
 
@@ -16,16 +17,16 @@ public class Dex2JarHelper {
     private String apkName;
     private static Dex2JarHelper dex2JarHelper;
 
+    private Dex2JarHelper() { }
+
     public static Dex2JarHelper getInstance(StaticAnalyzer.OS currentOs, String apkLocation, String apkName) {
         if (dex2JarHelper == null) {
             dex2JarHelper = new Dex2JarHelper();
             dex2JarHelper.currentOs = currentOs;
             dex2JarHelper.apkLocation = apkLocation;
             dex2JarHelper.apkName = apkName;
-            return dex2JarHelper;
-        } else {
-          return dex2JarHelper;
         }
+      return dex2JarHelper;
     }
 
     public String getDexDirectory() {
@@ -35,6 +36,8 @@ public class Dex2JarHelper {
     public void doDex2Jar() {
         createFolderForDex2Jar();
 
+        System.out.println("--------------------------------------------------------------------------------------");
+        System.out.println("Starting dex2jar conversion" + "\n");
         List<String> arguments = new ArrayList<>();
         switch (currentOs) {
             case Windows:

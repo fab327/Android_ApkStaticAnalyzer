@@ -10,6 +10,8 @@ import java.util.List;
 public class ApkToolHelper {
 
     public static void doApkTool(String javaHome, String javaHomeAlternative, String apkLocation, String apkName, StaticAnalyzer.OS currentOs) {
+        System.out.println("--------------------------------------------------------------------------------------");
+        System.out.println("Starting apkTool decompilation" + "\n");
         List<String> arguments = new ArrayList<>();
         arguments.add(javaHome);
         arguments.add("-jar");

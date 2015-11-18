@@ -8,7 +8,10 @@ import javax.swing.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * Created by fab on 11/10/2015
@@ -28,6 +31,11 @@ public class StaticAnalyzer {
         //Choose the file to analyze
         staticAnalyzer.chooseApk();
 
+        //Match it to its closest category
+        AnalyzerHelper analyzerHelper = AnalyzerHelper.getInstance();
+//        staticAnalyzer.matchApkToClosestCategory();
+        analyzerHelper.setApplicationType(AnalyzerHelper.ApplicationType.Others);
+
         //Decompile the apk
         ApkToolHelper.doApkTool(javaHome, javaHomeAlternative, apkLocation, apkName, currentOs);
         Dex2JarHelper dex2JarHelper = Dex2JarHelper.getInstance(currentOs, apkLocation, apkName);
@@ -38,7 +46,10 @@ public class StaticAnalyzer {
         staticAnalyzer.dexToJava();
 
         //Analyze the data
-        staticAnalyzer.analyze();
+        analyzerHelper.analyzeManifestPermissions(manifestPath);
+        analyzerHelper.analyzeJavaSources(decompiledDirectory);
+
+        staticAnalyzer.giveDiagnosis(analyzerHelper.getMalwareLikelihood());
     }
 
     private synchronized void determineOS() {
@@ -92,11 +103,17 @@ public class StaticAnalyzer {
         }
     }
 
+    private synchronized void matchApkToClosestCategory() {
+        //If time permits add a selection dropdown for the user to choose the closest category matching the apk
+    }
+
     /**
      * Decompile classes to Java source code
      */
     private synchronized void dexToJava() {
-        File classPath = new File (getClassPath());
+        System.out.println("--------------------------------------------------------------------------------------");
+        System.out.println("Starting decompiling classes to java" + "\n");
+        File classPath = new File(getClassPath());
         createFolderForDecompiled();
         File outputDir = new File(decompiledDirectory);
         getAndDecompileClasses(outputDir, classPath.listFiles());
@@ -107,10 +124,10 @@ public class StaticAnalyzer {
         String classpath = null;
         switch (currentOs) {
             case Windows:
-                classpath = dexDirectory + "\\" + packageName.replace(".","\\");
+                classpath = dexDirectory + "\\" + packageName.replace(".", "\\");
                 break;
             case OSX:
-                classpath = dexDirectory + "/" + packageName.replace(".","/");
+                classpath = dexDirectory + "/" + packageName.replace(".", "/");
                 break;
         }
 
@@ -130,11 +147,10 @@ public class StaticAnalyzer {
         try {
             builder = factory.newDocumentBuilder();
             document = builder.parse(new File(manifestPath));
-            Element root  = document.getDocumentElement();
+            Element root = document.getDocumentElement();
 
             packageName = root.getAttributes().getNamedItem("package").getNodeValue();
-        }
-        catch (ParserConfigurationException | SAXException | IOException e) {
+        } catch (ParserConfigurationException | SAXException | IOException e) {
             e.printStackTrace();
         }
         return packageName;
@@ -173,7 +189,7 @@ public class StaticAnalyzer {
     }
 
     private void getAndDecompileClasses(File outputDir, File[] files) {
-        for (File file: files) {
+        for (File file : files) {
             if (file.isDirectory()) {
                 getAndDecompileClasses(outputDir, file.listFiles());
             } else if (file.isFile()) {
@@ -198,7 +214,7 @@ public class StaticAnalyzer {
             case OSX:
                 fileOut = outputDir + "/" + className.replace(".class", ".java");
                 break;
-            }
+        }
 
         try {
             writer = new PrintWriter(fileOut);
@@ -216,34 +232,38 @@ public class StaticAnalyzer {
         }
     }
 
-    /**
-     * Reads the java files, line by line
-     */
-    private synchronized void analyze() {
-        File folder = new File(decompiledDirectory);
-        for (final File fileEntry : folder.listFiles()) {
-            if (fileEntry.isFile()) {
-                try {
-                    BufferedReader br = new BufferedReader(new FileReader(fileEntry.getAbsolutePath()));
-                    String line;
-
-                    System.out.println("Analysing Java File: " + fileEntry.getName());
-                    while ((line = br.readLine()) != null) {
-                        System.out.println(line);
-                        /**
-                         * Code analysis
-                         *
-                         *
-                         *
-                         *
-                         *
-                         *
-                         */
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+    private void giveDiagnosis(int analyzisScore) {
+        switch (analyzisScore/10){
+            case 0:
+                System.out.println("This app seems beningn, nothing to worry about");
+                break;
+            case 1:
+                break;
+            case 2:
+                break;
+            case 3:
+                break;
+            case 4:
+                break;
+            case 5:
+                break;
+            case 6:
+                break;
+            case 7:
+                break;
+            case 8:
+                break;
+            case 9:
+                System.out.println("This app requires a lot of invasive permissions, it is recommended not to install it");
+                break;
+            case 10:
+            case 11:
+            case 12:
+            case 13:
+            case 14:
+            case 15:
+                System.out.println("This app is extremely dangerous!");
+                break;
         }
     }
 
