@@ -12,8 +12,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by fab on 11/10/2015
@@ -254,7 +252,6 @@ public class StaticAnalyzer {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } finally {
-            System.out.println("Decompiled: " + className + " to .java");
             writer.flush();
         }
     }

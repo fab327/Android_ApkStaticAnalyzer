@@ -215,6 +215,7 @@ public class AnalyzerHelper {
 
     public int getMalwareLikelihood() {
         System.out.println("--------------------------------------------------------------------------------------");
+        System.out.println("APK recommendation" + "\n");
         System.out.println("Malware/Spyware/Trojan likelihood score: " + malwareLikelihood);
         return malwareLikelihood;
     }
