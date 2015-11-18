@@ -20,7 +20,7 @@ import java.io.IOException;
 
 public class AnalyzerHelper {
 
-    public enum ApplicationType{
+    public enum ApplicationType {
         Communication,
         Education,
         Entertainment,
@@ -84,21 +84,121 @@ public class AnalyzerHelper {
     private static String MMS_SENDING_CODE = "sendMultimediaMessage";
     private static String DATA_SENDING_CODE = "sendDataMessage";
     private static String DOWNLOAD_SMS_CODE = "downloadMultimediaMessage";
-    private static String GET_USER_PHONE_NUMBER = "SubscriptionId";
+    private static String GET_USER_PHONE_NUMBER_CODE = "SubscriptionId";
+
+    /*
+     * NFC related
+     */
+    private static String NFC_CODE = "nfcManager";
+
+    /*
+     * BLUETOOTH
+     */
+    private static String BLUETOOTH_CODE = "bluetoothAdapter";
+
+    /*
+     * TELEPHONY MANAGER
+     * https://developer.android.com/reference/android/telephony/TelephonyManager.html
+     */
+    private static String DEVICE_ID_CODE = "getDeviceId";
+    private static String USER_PHONE_NUMBER_CODE = "getLine1Number";
+    private static String NETWORK_INFO_CODE = "getNetworkCountryIso";
+    private static String NETWORK_OPERATOR_CODE = "getNetworkOperator";
+    private static String SIM_INFO_CODE = "getSimOperator";
+    private static String SUBSCRIBER_ID_CODE = "getSubscriberId";
+    private static String VOICEMAIL_NUMBER_CODE = "getVoiceMail";
+    private static String VOICEMAIL_NUMBER_CHANGE_CODE = "setVoiceMailNumber";
+
+    /*
+     * PHONE STATE LISTENER
+     * https://developer.android.com/reference/android/telephony/PhoneStateListener.html
+     */
+    private static String PHONE_STATE_LISTENER_CODE = "PhoneStateListener";
+
+    /*
+     * SUBSCRIPTION MANAGER
+     * https://developer.android.com/reference/android/telephony/SubscriptionManager.html
+     */
+    private static String SUBSCRIPTION_MANAGER_CODE = "SubscriptionManager";
+
+    /*
+     * ACCOUNT MANAGER
+     * https://developer.android.com/reference/android/accounts/AccountManager.html
+     */
+    private static String GET_ACCOUNTS_CODE = "getAccounts";
+
+    /*
+     * LOCATION
+     * https://developer.android.com/reference/android/location/Location.html
+     */
+    private static String GET_ALTITUDE_CODE = "getAltitude";
+    private static String GET_LATITUDE_CODE = "getLatitude";
+    private static String GET_LONGITUDE_CODE = "getLongitude";
+
+    /*
+     * LOCATION MANAGER
+     * https://developer.android.com/reference/android/location/LocationManager.html
+     */
+    private static String GET_LAST_LOCATION_CODE = "getLastKnownLocation";
+    private static String GPS_STATUS_LISTENER_CODE = "addGpsStatusListener";
+    private static String GET_LOCATION_UPDATES_CODE = "requestLocationUpdates";
+
+    /*
+     * AUDIO MANAGER
+     * https://developer.android.com/reference/android/media/AudioManager.html
+     */
+    private static String AUDIO_MANAGER_CODE = "AudioManager";
+
+    /*
+     * AUDIO RECORD
+     * https://developer.android.com/reference/android/media/AudioRecord.html
+     */
+    private static String AUDIO_RECORD_CODE = "AudioRecord";
+
+    /*
+     * MEDIA RECORDER
+     * https://developer.android.com/reference/android/media/MediaRecorder.html
+     */
+    private static String MEDIA_RECORDER_CODE = "MediaRecorder";
+
+    /*
+     * MEDIA STORE
+     * https://developer.android.com/reference/android/provider/MediaStore.html#ACTION_IMAGE_CAPTURE
+     */
+    private static String ACTION_IMAGE_CAPTURE_CODE = "android.media.action.IMAGE_CAPTURE";
+    private static String ACTION_IMAGE_CAPTURE_SECURE_CODE = "android.media.action.IMAGE_CAPTURE_SECURE";
+    private static String ACTION_VIDEO_CAPTURE_CODE = "android.media.action.VIDEO_CAPTURE";
 
     /*
      * Trackers so we do not count the score twice
      * They should all add up to 100
      */
-    private boolean smsSendingAlreadyCounted;       // 10 - SMS_SENDING_CODE, SMS_MULTIPART_SENDING_CODE, MMS_SENDING_CODE
-    private boolean dataSendingAlreadyCounted;      // 5 - DATA_SENDING_CODE
-    private boolean downloadSmsAlreadyCounted;      // 5 - DOWNLOAD_SMS_CODE
-    private boolean userPhoneNumberAlreadyCounted;  // 10 - GET_USER_PHONE_NUMBER
+    private boolean smsSendingAlreadyCounted;           // 10 - SMS_SENDING_CODE, SMS_MULTIPART_SENDING_CODE, MMS_SENDING_CODE
+    private boolean dataSendingAlreadyCounted;          // 5 - DATA_SENDING_CODE
+    private boolean downloadSmsAlreadyCounted;          // 5 - DOWNLOAD_SMS_CODE
+    private boolean userPhoneNumberAlreadyCounted;      // 10 - GET_USER_PHONE_NUMBER_CODE, USER_PHONE_NUMBER_CODE
+    private boolean nfcAlreadyCounted;                  // 5 - NFC_CODE
+    private boolean bluetoothAlreadyCounted;            // 5 - BLUETOOTH_CODE
+    private boolean deviceIdAlreadyCounted;             // 5 - DEVICE_ID_CODE
+    private boolean networkInfoAlreadyCounted;          // 5 - NETWORK_INFO_CODE, NETWORK_OPERATOR_CODE
+    private boolean simInfoAlreadyCounted;              // 5 - SIM_INFO_CODE
+    private boolean subscriberIdAlreadyCounted;         // 5 - SUBSCRIBER_ID_CODE
+    private boolean voicemailAccessAlreadyCounted;      // 10 - VOICEMAIL_NUMBER_CODE, VOICEMAIL_NUMBER_CHANGE_CODE
+    private boolean phoneStateListenerAlreadyCounted;   // 5 - PHONE_STATE_LISTENER_CODE
+    private boolean subscriptionManagerAlreadyCounted;  // 5 - SUBSCRIPTION_MANAGER_CODE
+    private boolean getAccountsAlreadyCounted;          // 10 - GET_ACCOUNTS_CODE
+    private boolean getLocationAlreadyCounted;          // 10 - GET_ALTITUDE_CODE, GET_LATITUDE_CODE, GET_LONGITUDE_CODE, GET_LAST_LOCATION_CODE
+    private boolean getLocationUpdateAlreadyCounted;    // 10 - GPS_STATUS_LISTENER_CODE, GET_LOCATION_UPDATES_CODE
+    private boolean getAudioManagerAlreadyCounted;      // 5 - AUDIO_MANAGER_CODE
+    private boolean getAudioRecordAlreadyCounted;       // 10 - AUDIO_RECORD_CODE
+    private boolean getMediaRecordAlreadyCounted;       // 10 - MEDIA_RECORDER_CODE
+    private boolean getMediaCaptureAlreadyCounted;      // 10 - ACTION_IMAGE_CAPTURE_CODE, ACTION_IMAGE_CAPTURE_SECURE_CODE, ACTION_VIDEO_CAPTURE_CODE
 
-    private ApplicationType currentApplicationType;
+    private ApplicationType currentApplicationType; // If time permits use that to better classify permission requests an api method calls
     private int malwareLikelihood;
 
-    private AnalyzerHelper() {}
+    private AnalyzerHelper() {
+    }
 
     public static AnalyzerHelper getInstance() {
         if (analyzerHelper == null) {
@@ -148,7 +248,7 @@ public class AnalyzerHelper {
         }
     }
 
-    //TODO: Adjust the malware score per permission
+    //TODO: Adjust the malware score per permission if time permits
     private void manifestPermissionsMatcher(String nodeValue) {
         if (nodeValue.toLowerCase().contains(READ_CALENDAR.toLowerCase())) {
             System.out.println("The app requires read calendar permission");
@@ -263,22 +363,190 @@ public class AnalyzerHelper {
     private void javaSourceMatcher(String currentClass, String currentLine) {
 
         //Search and calculate the score
-        if(currentLine.toLowerCase().contains(SMS_SENDING_CODE.toLowerCase())) {
-            System.out.println("The app sends text messages from: " + currentClass + ".java");
+        if (currentLine.toLowerCase().contains(SMS_SENDING_CODE.toLowerCase())) {
+            System.out.println("The app sends text messages from: " + currentClass);
             if (!smsSendingAlreadyCounted) {
                 smsSendingAlreadyCounted = true;
                 malwareLikelihood += 10;
             }
         } else if (currentLine.toLowerCase().contains(SMS_MULTIPART_SENDING_CODE.toLowerCase())) {
-            System.out.println("The app sends multipart text messages from: " + currentClass + ".java");
+            System.out.println("The app sends multipart text messages from: " + currentClass);
             if (!smsSendingAlreadyCounted) {
                 smsSendingAlreadyCounted = true;
                 malwareLikelihood += 10;
             }
         } else if (currentLine.toLowerCase().contains(MMS_SENDING_CODE.toLowerCase())) {
-            System.out.println("The app sends mms text messages from: " + currentClass + ".java");
+            System.out.println("The app sends mms text messages from: " + currentClass);
             if (!smsSendingAlreadyCounted) {
                 smsSendingAlreadyCounted = true;
+                malwareLikelihood += 10;
+            }
+        } else if (currentLine.toLowerCase().contains(DATA_SENDING_CODE.toLowerCase())) {
+            System.out.println("The app sends data messages from: " + currentClass);
+            if (!dataSendingAlreadyCounted) {
+                dataSendingAlreadyCounted = true;
+                malwareLikelihood += 5;
+            }
+        } else if (currentLine.toLowerCase().contains(DOWNLOAD_SMS_CODE.toLowerCase())) {
+            System.out.println("The app downloads text messages from: " + currentClass);
+            if (!downloadSmsAlreadyCounted) {
+                downloadSmsAlreadyCounted = true;
+                malwareLikelihood += 5;
+            }
+        } else if (currentLine.toLowerCase().contains(GET_USER_PHONE_NUMBER_CODE.toLowerCase())) {
+            System.out.println("The app gathers the user phone number in: " + currentClass);
+            if (!userPhoneNumberAlreadyCounted) {
+                userPhoneNumberAlreadyCounted = true;
+                malwareLikelihood += 10;
+            }
+        } else if (currentLine.toLowerCase().contains(USER_PHONE_NUMBER_CODE.toLowerCase())) {
+            System.out.println("The app gathers the user phone number in: " + currentClass);
+            if (!userPhoneNumberAlreadyCounted) {
+                userPhoneNumberAlreadyCounted = true;
+                malwareLikelihood += 10;
+            }
+        } else if (currentLine.toLowerCase().contains(NFC_CODE.toLowerCase())) {
+            System.out.println("The app makes use of NFC in: " + currentClass);
+            if (!nfcAlreadyCounted) {
+                nfcAlreadyCounted = true;
+                malwareLikelihood += 5;
+            }
+        } else if (currentLine.toLowerCase().contains(BLUETOOTH_CODE.toLowerCase())) {
+            System.out.println("The app makes use of Bluetooth in: " + currentClass);
+            if (!bluetoothAlreadyCounted) {
+                bluetoothAlreadyCounted = true;
+                malwareLikelihood += 5;
+            }
+        } else if (currentLine.toLowerCase().contains(DEVICE_ID_CODE.toLowerCase())) {
+            System.out.println("The app gathers the phone device id from: " + currentClass);
+            if (!deviceIdAlreadyCounted) {
+                deviceIdAlreadyCounted = true;
+                malwareLikelihood += 5;
+            }
+        } else if (currentLine.toLowerCase().contains(NETWORK_INFO_CODE.toLowerCase())) {
+            System.out.println("The app gathers network information from: " + currentClass);
+            if (!networkInfoAlreadyCounted) {
+                networkInfoAlreadyCounted = true;
+                malwareLikelihood += 5;
+            }
+        } else if (currentLine.toLowerCase().contains(NETWORK_OPERATOR_CODE.toLowerCase())) {
+            System.out.println("The app gathers network information from: " + currentClass);
+            if (!networkInfoAlreadyCounted) {
+                networkInfoAlreadyCounted = true;
+                malwareLikelihood += 5;
+            }
+        } else if (currentLine.toLowerCase().contains(SIM_INFO_CODE.toLowerCase())) {
+            System.out.println("The app gathers the sim information from: " + currentClass);
+            if (!simInfoAlreadyCounted) {
+                simInfoAlreadyCounted = true;
+                malwareLikelihood += 5;
+            }
+        } else if (currentLine.toLowerCase().contains(SUBSCRIBER_ID_CODE.toLowerCase())) {
+            System.out.println("The app gathers the subscriber id from: " + currentClass);
+            if (!subscriberIdAlreadyCounted) {
+                subscriberIdAlreadyCounted = true;
+                malwareLikelihood += 5;
+            }
+        } else if (currentLine.toLowerCase().contains(VOICEMAIL_NUMBER_CODE.toLowerCase())) {
+            System.out.println("The app access the user voicemail from: " + currentClass);
+            if (!voicemailAccessAlreadyCounted) {
+                voicemailAccessAlreadyCounted = true;
+                malwareLikelihood += 10;
+            }
+        } else if (currentLine.toLowerCase().contains(VOICEMAIL_NUMBER_CHANGE_CODE.toLowerCase())) {
+            System.out.println("The app changes the user voicemail number from: " + currentClass);
+            if (!voicemailAccessAlreadyCounted) {
+                voicemailAccessAlreadyCounted = true;
+                malwareLikelihood += 10;
+            }
+        } else if (currentLine.toLowerCase().contains(PHONE_STATE_LISTENER_CODE.toLowerCase())) {
+            System.out.println("The app listens to the phone state from: " + currentClass);
+            if (!phoneStateListenerAlreadyCounted) {
+                phoneStateListenerAlreadyCounted = true;
+                malwareLikelihood += 5;
+            }
+        } else if (currentLine.toLowerCase().contains(SUBSCRIPTION_MANAGER_CODE.toLowerCase())) {
+            System.out.println("The app subscribes to the subscription manager events from: " + currentClass);
+            if (!subscriptionManagerAlreadyCounted) {
+                subscriptionManagerAlreadyCounted = true;
+                malwareLikelihood += 5;
+            }
+        } else if (currentLine.toLowerCase().contains(GET_ACCOUNTS_CODE.toLowerCase())) {
+            System.out.println("The app accesses the user's accounts from: " + currentClass);
+            if (!getAccountsAlreadyCounted) {
+                getAccountsAlreadyCounted = true;
+                malwareLikelihood += 10;
+            }
+        } else if (currentLine.toLowerCase().contains(GET_ALTITUDE_CODE.toLowerCase())) {
+            System.out.println("The app accesses the user altitude from: " + currentClass);
+            if (!getLocationAlreadyCounted) {
+                getLocationAlreadyCounted = true;
+                malwareLikelihood += 10;
+            }
+        } else if (currentLine.toLowerCase().contains(GET_LATITUDE_CODE.toLowerCase())) {
+            System.out.println("The app accesses the user latitude from: " + currentClass);
+            if (!getLocationAlreadyCounted) {
+                getLocationAlreadyCounted = true;
+                malwareLikelihood += 10;
+            }
+        }  else if (currentLine.toLowerCase().contains(GET_LONGITUDE_CODE.toLowerCase())) {
+            System.out.println("The app accesses the user longitude from: " + currentClass);
+            if (!getLocationAlreadyCounted) {
+                getLocationAlreadyCounted = true;
+                malwareLikelihood += 10;
+            }
+        } else if (currentLine.toLowerCase().contains(GET_LAST_LOCATION_CODE.toLowerCase())) {
+            System.out.println("The app accesses the user location from: " + currentClass);
+            if (!getLocationAlreadyCounted) {
+                getLocationAlreadyCounted = true;
+                malwareLikelihood += 10;
+            }
+        } else if (currentLine.toLowerCase().contains(GPS_STATUS_LISTENER_CODE.toLowerCase())) {
+            System.out.println("The app listens to the gps status from: " + currentClass);
+            if (!getLocationUpdateAlreadyCounted) {
+                getLocationUpdateAlreadyCounted = true;
+                malwareLikelihood += 10;
+            }
+        } else if (currentLine.toLowerCase().contains(GET_LOCATION_UPDATES_CODE.toLowerCase())) {
+            System.out.println("The app listens to location updates from: " + currentClass);
+            if (!getLocationUpdateAlreadyCounted) {
+                getLocationUpdateAlreadyCounted = true;
+                malwareLikelihood += 10;
+            }
+        } else if (currentLine.toLowerCase().contains(AUDIO_MANAGER_CODE.toLowerCase())) {
+            System.out.println("The app access the audio manager from: " + currentClass);
+            if (!getAudioManagerAlreadyCounted) {
+                getAudioManagerAlreadyCounted = true;
+                malwareLikelihood += 5;
+            }
+        } else if (currentLine.toLowerCase().contains(AUDIO_RECORD_CODE.toLowerCase())) {
+            System.out.println("The app records audio from: " + currentClass);
+            if (!getAudioRecordAlreadyCounted) {
+                getAudioRecordAlreadyCounted = true;
+                malwareLikelihood += 10;
+            }
+        } else if (currentLine.toLowerCase().contains(MEDIA_RECORDER_CODE.toLowerCase())) {
+            System.out.println("The app accesses the media recorder from: " + currentClass);
+            if (!getMediaRecordAlreadyCounted) {
+                getMediaRecordAlreadyCounted = true;
+                malwareLikelihood += 10;
+            }
+        } else if (currentLine.toLowerCase().contains(ACTION_IMAGE_CAPTURE_CODE.toLowerCase())) {
+            System.out.println("The app calls for an image capture from: " + currentClass);
+            if (!getMediaCaptureAlreadyCounted) {
+                getMediaCaptureAlreadyCounted = true;
+                malwareLikelihood += 10;
+            }
+        } else if (currentLine.toLowerCase().contains(ACTION_IMAGE_CAPTURE_SECURE_CODE.toLowerCase())) {
+            System.out.println("The app calls for an image capture from: " + currentClass);
+            if (!getMediaCaptureAlreadyCounted) {
+                getMediaCaptureAlreadyCounted = true;
+                malwareLikelihood += 10;
+            }
+        } else if (currentLine.toLowerCase().contains(ACTION_VIDEO_CAPTURE_CODE.toLowerCase())) {
+            System.out.println("The app calls for a video capture from: " + currentClass);
+            if (!getMediaCaptureAlreadyCounted) {
+                getMediaCaptureAlreadyCounted = true;
                 malwareLikelihood += 10;
             }
         }
