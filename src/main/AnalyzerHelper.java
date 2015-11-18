@@ -42,6 +42,7 @@ public class AnalyzerHelper {
      * MANIFEST PERMISSIONS TO WATCH FOR
      * Based on a list of dangerous permissions provided by Google
      * https://developer.android.com/guide/topics/security/permissions.html
+     * They all add up to 92
      */
     private static String READ_CALENDAR = "android.permission.READ_CALENDAR";
     private static String WRITE_CALENDAR = "android.permission.WRITE_CALENDAR";
@@ -71,6 +72,7 @@ public class AnalyzerHelper {
     /*
      * MANIFEST BROADCAST ACTIONS TO WATCH FOR
      * https://developer.android.com/reference/android/content/Intent.html -> Standard Broadcast Actions
+     * They all add up to 6
      */
     private static String ACTION_BOOT_COMPLETED = "android.intent.action.BOOT_COMPLETED";
     private static String ACTION_PACKAGE_ALL = "android.intent.action.PACKAGE_";
@@ -171,7 +173,7 @@ public class AnalyzerHelper {
 
     /*
      * Trackers so we do not count the score twice
-     * They should all add up to 100
+     * They should all add up to 145
      */
     private boolean smsSendingAlreadyCounted;           // 10 - SMS_SENDING_CODE, SMS_MULTIPART_SENDING_CODE, MMS_SENDING_CODE
     private boolean dataSendingAlreadyCounted;          // 5 - DATA_SENDING_CODE
