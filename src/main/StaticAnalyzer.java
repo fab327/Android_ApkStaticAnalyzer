@@ -259,26 +259,30 @@ public class StaticAnalyzer {
     private void giveDiagnosis(int analyzisScore) {
         switch (analyzisScore/10){
             case 0:
-                System.out.println("This app seems benign, nothing to worry about.");
+                System.out.println("This app seems doesn't require many permissions, nothing to worry about.");
                 break;
             case 1:
-                System.out.println("This app requires a few benign permissions.");
-                break;
             case 2:
-            case 3:
-                System.out.println("This app requires a few invasive permissions, it is recommended not to install it.");
+                System.out.println("This app requires a few permissions.");
                 break;
+            case 3:
             case 4:
+                System.out.println("This app requires a few invasive permissions, do you really need to the app ?");
+                break;
             case 5:
             case 6:
+                System.out.println("This app requires dangerous/sensitive permissions, only install it if you trust its developer");
+                break;
             case 7:
             case 8:
             case 9:
+                System.out.println("This app makes use of several dangerous/sensitive permissions, it is recommended not to install it.");
+                break;
             case 10:
             case 11:
-                System.out.println("This app requires invasive permissions, it is recommended not to install it.");
-                break;
             case 12:
+                System.out.println("This app is extremely invasive and dangerous, install it at your own risks.");
+                break;
             case 13:
             case 14:
             case 15:
@@ -289,7 +293,7 @@ public class StaticAnalyzer {
             case 20:
             case 21:
             case 22:
-                System.out.println("This app is extremely dangerous!");
+                System.out.println("This app is extremely dangerous and invasive! Do not install it");
                 break;
         }
     }
