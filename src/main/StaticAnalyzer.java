@@ -119,8 +119,16 @@ public class StaticAnalyzer {
         getAndDecompileClasses(outputDir, classPath);
     }
 
+    /*
+     * We want to analyze only the classes in the domain/root folder
+     * so that we do not get false positive from 3rd party libraries or even google dependencies
+     *
+     * However, because some apks have a lot of their logic in folders on the same level as their root
+     * we ignore the last '.' from the package name.
+     */
     private synchronized String getClassPath() {
         String packageName = getPackageName();
+        packageName = packageName.substring(0, packageName.lastIndexOf("."));
         String classpath = null;
         switch (currentOs) {
             case Windows:
