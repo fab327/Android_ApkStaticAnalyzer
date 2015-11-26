@@ -16,6 +16,7 @@ import java.io.IOException;
 /**
  * Created by fab on 11/17/2015
  * Singleton class
+ * Max score - 243
  */
 
 public class AnalyzerHelper {
