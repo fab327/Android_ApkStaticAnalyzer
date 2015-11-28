@@ -271,7 +271,7 @@ public class StaticAnalyzer {
                 break;
             case 1:
             case 2:
-                System.out.println("This app requires a few permissions.");
+                System.out.println("This app requires a few dangerous permissions.");
                 break;
             case 3:
             case 4:
