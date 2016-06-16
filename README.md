@@ -14,7 +14,7 @@ Useful setup information:
 
 - Set the source package as pictured below
  
-
+![alt text](http://www.justfabcodes.com/projects/apk_analyzer/2_SetSources.png "Set Source")
 
 - "StaticAnalyzer" is the program's entry point. 
 - If errors are found after importing the maven dependencies make sure to set up the java project and compilers as Java 8 as seen on the following screenshots
